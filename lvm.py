@@ -93,9 +93,21 @@ class LlamaRotaryEmbedding(nn.Module):
         self.rope_kwargs = {}
         self.rope_type = "default"
         self.config = config
-        self.rope_init_fn = ROPE_INIT_FUNCTIONS[self.rope_type]
+        # transformers >= 4.50 dropped the "default" key from ROPE_INIT_FUNCTIONS,
+        # so fall back to the canonical inv_freq = 1 / theta^(2i/d) computation.
+        if self.rope_type in ROPE_INIT_FUNCTIONS:
+            self.rope_init_fn = ROPE_INIT_FUNCTIONS[self.rope_type]
+            inv_freq, _ = self.rope_init_fn(self.config, device, **self.rope_kwargs)
+        else:
+            base = float(getattr(config, "rope_theta", 10000.0))
+            head_dim = getattr(config, "head_dim", None) or (
+                config.hidden_size // config.num_attention_heads
+            )
+            inv_freq = 1.0 / (
+                base ** (torch.arange(0, head_dim, 2, device=device, dtype=torch.float) / head_dim)
+            )
+            self.rope_init_fn = None
         self.max_position_embeddings = config.max_position_embeddings
-        inv_freq, _ = self.rope_init_fn(self.config, device, **self.rope_kwargs)
         self.register_buffer("inv_freq", inv_freq, persistent=False)
         self._set_cos_sin_cache(
             device=self.inv_freq.device,
