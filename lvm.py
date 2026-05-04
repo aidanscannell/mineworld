@@ -420,7 +420,7 @@ class LlamaForCausalLM(PreTrainedModel):
         
         generated_tokens = decode_n_tokens(
             self,
-            input_ids = next_token.view(1, -1),
+            input_ids = next_token,   # already [B, 1] from sample_top_p / sample_top_k; .view(1, -1) was a B=1 hardcode
             position_ids = position_ids,
             num_generate_tokens = max_new_tokens - 1,
             temperature = temperature,
@@ -496,7 +496,7 @@ class LlamaForCausalLM(PreTrainedModel):
 
         generated_tokens = img_diagd_decode_n_tokens(
             self,
-            input_ids = next_token.view(1, -1),
+            input_ids = next_token,   # already [B, 1] from sample_top_p / sample_top_k; .view(1, -1) was a B=1 hardcode
             position_ids = position_ids,
             num_generate_tokens = max_new_tokens - 1,
             temperature = temperature,
@@ -527,7 +527,7 @@ class LlamaForCausalLM(PreTrainedModel):
 
         generated_tokens = video_diagd_decode_n_tokens(
             self,
-            input_ids = next_token.view(1, -1),
+            input_ids = next_token,   # already [B, 1] from sample_top_p / sample_top_k; .view(1, -1) was a B=1 hardcode
             position_ids = position_ids,
             num_generate_tokens = max_new_tokens - 1,
             temperature = temperature,
